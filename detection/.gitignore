@@ -1,3 +1,6 @@
 trained_models/
 test_data/
 runs/
+videos/
+train_data/
+*.pt
