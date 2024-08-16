@@ -1,13 +1,17 @@
 from ultralytics import YOLO 
 import os
+from dotenv import load_dotenv 
+load_dotenv() 
   
-weights = r"trained_models\18k aero (batch 32)\weights\best.pt"
+weights = os.getenv("WEIGHTS_PATH")
 model = YOLO(weights)
 
-basePath = r"test_data\\photos\\"
+basePath = os.getenv("BASE_PATH_PHOTO")
 imagePaths = [basePath + imagePath for imagePath in os.listdir(basePath)]
+videoPath = os.getenv("VIDEO_PATH")
+
 model.predict(
-    imagePaths, 
+    videoPath, 
     save=True,
     iou=0.4,
     show_labels=True,

@@ -1,10 +1,14 @@
 from ultralytics import YOLO 
 import cv2
+import os
+from dotenv import load_dotenv
+load_dotenv() 
 
-weights = r"C:\Users\User\Documents\python\mapping\detection\trained_models\18k aero (batch 32)\weights\best.pt"
+weights = os.getenv("WEIGHTS_PATH")
 model = YOLO(weights)
 
-videoCap = cv2.VideoCapture(r"\\10.33.1.60\отдел робототехники\3. Work\видео\Датский\2024_08_15_09_11_59.mp4")
+videoPath = os.getenv("VIDEO_PATH")
+videoCap = cv2.VideoCapture(videoPath)
 
 while True:
     ret, frame = videoCap.read()

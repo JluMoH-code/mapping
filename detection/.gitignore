@@ -4,3 +4,4 @@ runs/
 videos/
 train_data/
 *.pt
+.env
