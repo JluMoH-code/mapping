@@ -1,6 +1,8 @@
 import cv2
 import os
 import re
+from dotenv import load_dotenv 
+load_dotenv()
 
 save_frames = True
 
@@ -34,9 +36,8 @@ def save_frame(video_path, save_path, start_frame, save_interval=1):
                 filename = f'frame_{saved_frame_count}.jpg'
                 cv2.imwrite(save_path + filename, frame)
 
-   
-save_path = "train_data\\cropped_images\\"
-video_path = "train_data\\videos\\crop_2023_03_19_22_03_24.mp4"
+save_path = os.getenv("SAVE_PATH_CROPPING_FRAME")
+video_path = os.getenv("VIDEO_PATH")
 start_frame = 0
 
 images = os.listdir(save_path)         
