@@ -2,6 +2,7 @@ import albumentations as A
 import cv2
 import os
 import random
+import uuid
 from dotenv import load_dotenv 
 load_dotenv() 
 
@@ -79,6 +80,22 @@ def load_data_from_folders(data_folder):
 
         yield image, bboxes, category_ids, category_id_to_name, image_file
       
+def save_img(image, bboxes, category_ids, image_file):
+    images_folder = data_folder_path + 'images'
+    labels_folder = data_folder_path + 'labels'
+    
+    uuid_add_name = str(uuid.uuid4())
+    label_file = image_file[:-4] + ".txt"
+    image_path = images_folder + "\\" + uuid_add_name + image_file
+    label_path = labels_folder + "\\" + uuid_add_name + label_file
+    
+    combined = [[category_id, *bbox] for category_id, bbox in zip(category_ids, bboxes)]
+    cv2.imwrite(image_path, image)
+    
+    with open(label_path, 'w') as file:
+        for item in combined:
+            file.write(' '.join(map(str, item)) + '\n')
+      
 def get_pipeline(p):
     return A.Compose(
         [
@@ -114,3 +131,4 @@ data_generator = load_data_from_folders(data_folder_path)
 for image, bboxes, category_ids, category_id_to_name, image_file in data_generator:    
     transformed = get_pipeline(p=0.2)(image=image, bboxes=bboxes, category_ids=category_ids)
     visualize(transformed['image'], transformed['bboxes'], transformed['category_ids'], category_id_to_name)
+    save_img(transformed['image'], transformed['bboxes'], transformed['category_ids'], image_file)
