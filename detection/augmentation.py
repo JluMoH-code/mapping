@@ -135,7 +135,7 @@ data_generator = load_data_from_folders(data_folder_path)
 image_files = get_image_files(data_folder_path)
 total_iterations = len(image_files)
 
-diff_transform_per_image = 3
+diff_transform_per_image = os.getenv("AUGMENTATION_PER_IMAGE")
        
 with alive_bar(total_iterations) as bar:
     for current_iteration, (image, bboxes, category_ids, category_id_to_name, image_file) in enumerate(data_generator):
