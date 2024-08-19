@@ -59,7 +59,7 @@ def create_yaml_file():
 
     with open(output_file, 'w') as f:
         f.write(f"train: ../train/images\n")
-        f.write(f"val: ../val/images\n")
+        f.write(f"val: ../valid/images\n")
         f.write(f"test: ../test/images\n")
         f.write(f"nc: {nc}\n")
         f.write(f"names: {names}\n")

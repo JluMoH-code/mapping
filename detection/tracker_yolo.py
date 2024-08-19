@@ -13,7 +13,7 @@ videoCap = cv2.VideoCapture(videoPath)
 while True:
     ret, frame = videoCap.read()
     if not ret:
-        continue
+        break
     
     frame = cv2.resize(frame, (frame.shape[1] // 2, frame.shape[0] // 2))
     results = model.track(frame, stream=True, persist=True)
