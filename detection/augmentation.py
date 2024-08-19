@@ -3,11 +3,16 @@ import cv2
 import os
 import random
 import uuid
+from alive_progress import alive_bar
 from dotenv import load_dotenv 
 load_dotenv() 
 
 COLOR_RED = (255, 0, 0)
 COLOR_WHITE = (255, 255, 255)
+
+def get_image_files(data_folder_path):
+    image_folder = os.path.join(data_folder_path, 'images')
+    return [f for f in os.listdir(image_folder) if f.endswith('.jpg')]
 
 def visualize_bbox(img, bbox, class_name, color=COLOR_RED, thickness=2):
     """Visualizes a single bounding box on the image"""
@@ -80,14 +85,13 @@ def load_data_from_folders(data_folder):
 
         yield image, bboxes, category_ids, category_id_to_name, image_file
       
-def save_img(image, bboxes, category_ids, image_file):
+def save_img(image, bboxes, category_ids):
     images_folder = data_folder_path + 'images'
     labels_folder = data_folder_path + 'labels'
     
     uuid_add_name = str(uuid.uuid4())
-    label_file = image_file[:-4] + ".txt"
-    image_path = images_folder + "\\" + uuid_add_name + image_file
-    label_path = labels_folder + "\\" + uuid_add_name + label_file
+    image_path = images_folder + "\\" + uuid_add_name + ".jpg"
+    label_path = labels_folder + "\\" + uuid_add_name + ".txt"
     
     combined = [[category_id, *bbox] for category_id, bbox in zip(category_ids, bboxes)]
     cv2.imwrite(image_path, image)
@@ -127,8 +131,16 @@ def get_pipeline(p):
 
 data_folder_path = os.getenv("BASE_PATH_TRAIN_DATA") + "\\"
 data_generator = load_data_from_folders(data_folder_path)
+
+image_files = get_image_files(data_folder_path)
+total_iterations = len(image_files)
+
+diff_transform_per_image = 3
        
-for image, bboxes, category_ids, category_id_to_name, image_file in data_generator:    
-    transformed = get_pipeline(p=0.2)(image=image, bboxes=bboxes, category_ids=category_ids)
-    visualize(transformed['image'], transformed['bboxes'], transformed['category_ids'], category_id_to_name)
-    save_img(transformed['image'], transformed['bboxes'], transformed['category_ids'], image_file)
+with alive_bar(total_iterations) as bar:
+    for current_iteration, (image, bboxes, category_ids, category_id_to_name, image_file) in enumerate(data_generator):
+        for _ in range(diff_transform_per_image):
+            transformed = get_pipeline(p=0.2)(image=image, bboxes=bboxes, category_ids=category_ids)
+            visualize(transformed['image'], transformed['bboxes'], transformed['category_ids'], category_id_to_name)
+            save_img(transformed['image'], transformed['bboxes'], transformed['category_ids'])
+        bar()
