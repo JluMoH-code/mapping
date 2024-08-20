@@ -31,14 +31,33 @@ class ApplicationCore:
             return new_coordinates
         return None
 
+    def draw_detections(self, frame, detections):
+        """
+        Отрисовывает обнаруженные объекты на кадре.
+        """
+        for detection in detections:
+            # Распаковываем координаты
+            x_min, y_min, x_max, y_max = map(int, detection.box)
+
+            # Отрисовываем прямоугольник вокруг обнаруженного объекта
+            cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
+
+            # Отрисовываем класс и уверенность
+            label = f"Class: {detection.class_id}, Confidence: {detection.confidence:.2f}"
+            cv2.putText(frame, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+        return frame
+
     def run(self):
         try:
             while True:
                 # 1. Получение следующего кадра
                 frame = self.get_frame()
 
-                # 2. Обнаружение объектов
-                # objects = self.detect_objects(frame)
+                detections = self.detector.detect_objects(frame)
+
+                # 3. Отрисовка обнаруженных объектов на кадре
+                frame_with_detections = self.draw_detections(frame, detections)
 
                 # 3. Если объект еще не выбран, предложить выбрать
                 # if not self.is_tracking:
@@ -50,7 +69,7 @@ class ApplicationCore:
                 #     self.track_object(frame)
 
                 # 5. Отображение или запись результата
-                cv2.imshow('Frame', frame)
+                cv2.imshow('Frame', frame_with_detections)
                 cv2.waitKey(1)
 
         except KeyboardInterrupt:

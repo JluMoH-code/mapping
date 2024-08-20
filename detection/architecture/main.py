@@ -8,9 +8,10 @@ from dotenv import load_dotenv
 load_dotenv("C:\\Users\\User\\Documents\\python\\mapping\\detection\\.env")
 
 videoPath = os.getenv("VIDEO_PATH")
+weightsPath = os.getenv("WEIGHTS_PATH")
 
 frameCapture = FrameCapture.OpenCVFrameCapture(videoPath)
-objectDetector = ObjectDetector.ObjectDetector()
+objectDetector = ObjectDetector.YOLODetector(weightsPath)
 objectSelector = ObjectSelector.ObjectSelector()
 objectTracker = ObjectTracker.ObjectTracker()
 
