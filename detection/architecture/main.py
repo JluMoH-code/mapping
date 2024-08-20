@@ -12,7 +12,7 @@ weightsPath = os.getenv("WEIGHTS_PATH")
 
 frameCapture = FrameCapture.OpenCVFrameCapture(videoPath)
 objectDetector = ObjectDetector.YOLODetector(weightsPath)
-objectSelector = ObjectSelector.ObjectSelector()
+objectSelector = ObjectSelector.ClickObjectSelector()
 objectTracker = ObjectTracker.ObjectTracker()
 
 core = ApplicationCore.ApplicationCore(frameCapture, objectDetector, objectSelector, ObjectTracker)

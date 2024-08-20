@@ -50,6 +50,7 @@ class ApplicationCore:
 
     def run(self):
         try:
+            cv2.namedWindow("Frame")
             while True:
                 # 1. Получение следующего кадра
                 frame = self.get_frame()
@@ -60,9 +61,17 @@ class ApplicationCore:
                 frame_with_detections = self.draw_detections(frame, detections)
 
                 # 3. Если объект еще не выбран, предложить выбрать
-                # if not self.is_tracking:
-                #     self.selected_object = self.select_object(objects, method='click')
-                #     self.is_tracking = True
+                if not self.is_tracking:
+                    selected_object = self.selector.select_object(detections, frame_with_detections)
+                if selected_object:
+                    self.selected_object = selected_object
+                    self.is_tracking = True
+
+                    # Показ выбранного объекта в отдельном окне
+                    selected_box = self.selected_object.box
+                    selected_frame = frame[int(selected_box[1]):int(selected_box[3]), 
+                                           int(selected_box[0]):int(selected_box[2])]
+                    cv2.imshow('Selected Object', selected_frame)
 
                 # 4. Отслеживание объекта
                 # if self.is_tracking:
