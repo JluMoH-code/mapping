@@ -14,7 +14,7 @@ class Detection:
         self.class_id = class_id
         self.confidence = confidence
 
-class ObjectDetector:        
+class ObjectDetector:
     def load_model(self, model_path: str) -> Any:
         raise NotImplementedError
 

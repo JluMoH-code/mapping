@@ -10,18 +10,28 @@ class ClickObjectSelector(ObjectSelector):
     def __init__(self):
         self.selected_object = None
         self.click_position = None
-        self.detections = None
+        self.detections = []
         self.window = 'Frame'
+        self.update_flag = False
 
     def select_object(self, detections: List[Detection], image: Any) -> Optional[Detection]:
         self.detections = detections
         cv2.setMouseCallback(self.window, self.on_click)
-        return self.selected_object
+
+        if self.update_flag:
+            self.update_flag = False
+            return self.selected_object
+
+        return None
 
     def on_click(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             self.click_position = (x, y)
-            self.selected_object = self.find_nearest_object()
+            nearest_object = self.find_nearest_object()
+
+        if nearest_object:
+            self.selected_object = nearest_object
+            self.update_flag = True
 
     def find_nearest_object(self) -> Optional[Detection]:
         min_distance = float('inf')
