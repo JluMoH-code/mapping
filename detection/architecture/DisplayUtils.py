@@ -9,6 +9,9 @@ class DisplayUtils:
         self.window_name = window_name
         cv2.namedWindow(self.window_name)
 
+    def draw_detection_box(self, frame: Any, bbox: List[float]) -> None:
+        cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 0, 0), 2)
+
     def draw_detections(self, frame: Any, detections: List[Detection]) -> Any:
         frame_copy = np.copy(frame)
 
@@ -17,7 +20,7 @@ class DisplayUtils:
             class_id = detection.class_id
             confidence = detection.confidence
 
-            cv2.rectangle(frame_copy, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 2)
+            self.draw_detection_box(frame_copy, box)
 
             label = f"Class: {class_id}, Conf: {confidence:.2f}"
             cv2.putText(frame_copy, label, (int(box[0]), int(box[1]) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
@@ -63,21 +66,21 @@ class DisplayUtils:
 
         return x1, y1, x2, y2
 
-    def ensure_minimum_size(self, frame: Any, min_width: int, min_height: int) -> Any:
-        if frame.shape[0] < min_height or frame.shape[1] < min_width:
-            return self.resize_frame(frame, min_width, min_height)
+    def ensure_minimum_size(self, frame: Any, min_size_window: int) -> Any:
+        if frame.shape[0] < min_size_window or frame.shape[1] < min_size_window:
+            return self.resize_frame(frame, min_size_window, min_size_window)
         return frame
 
-    def show_selected_object(self, frame: Any, selected_object: Optional['Detection'], context_scale: float = 1.5, min_size: int = 100) -> None:
+    def show_selected_object(self, frame: Any, selected_object: Optional['Detection'], context_scale: float = 1.5, min_size_area: int = 150, min_size_window: int = 150) -> None:
         if selected_object:
-            x1, y1, x2, y2 = self.calculate_centered_area(selected_object.box, frame.shape, context_scale)
+            x1, y1, x2, y2 = self.calculate_centered_area(selected_object.box, frame.shape, context_scale, min_size_area)
             self.selected_frame = frame[y1:y2, x1:x2]
-            self.selected_frame = self.ensure_minimum_size(self.selected_frame, min_size, min_size)
+            self.selected_frame = self.ensure_minimum_size(self.selected_frame, min_size_window)
             cv2.imshow('Selected Object', self.selected_frame)
             return self.selected_frame
 
-    def show_frame(self, frame: Any) -> None:
-        cv2.imshow(self.window_name, frame)
+    def show_frame(self, frame: Any, window_name: str = "Frame") -> None:
+        cv2.imshow(window_name, frame)
 
     def close_windows(self) -> None:
         cv2.destroyAllWindows()
