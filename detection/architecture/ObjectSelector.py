@@ -1,5 +1,5 @@
 from typing import List, Optional, Any
-from ObjectDetector import Detection
+from Detection import Detection
 import cv2
 
 class ObjectSelector:
@@ -25,8 +25,11 @@ class ClickObjectSelector(ObjectSelector):
         return None
 
     def on_click(self, event, x, y, flags, param):
+        nearest_object = None
+        
         if event == cv2.EVENT_LBUTTONDOWN:
             self.click_position = (x, y)
+            print(f"click position: {self.click_position}")
             nearest_object = self.find_nearest_object()
 
         if nearest_object:

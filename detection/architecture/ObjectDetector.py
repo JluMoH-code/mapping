@@ -1,3 +1,5 @@
+from Detection import Detection
+from DisplayUtils import DisplayUtils
 from typing import List, Any
 from ultralytics import YOLO
 import torchvision.models.detection as detection
@@ -7,12 +9,6 @@ from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg
 from detectron2 import model_zoo
 from detectron2.data import MetadataCatalog
-
-class Detection:
-    def __init__(self, box: List[float], class_id: int, confidence: float):
-        self.box = box
-        self.class_id = class_id
-        self.confidence = confidence
 
 class ObjectDetector:
     def load_model(self, model_path: str) -> Any:
@@ -30,22 +26,28 @@ class YOLODetector(ObjectDetector):
         self.confidence_threshold = confidence_threshold
         self.nms_threshold = nms_threshold
         self.model = self.load_model(model_path)
+        self.detections = []
 
     def load_model(self, model_path: str) -> YOLO:
         return YOLO(model_path)
 
-    def detect_objects(self, image: Any) -> List[Detection]:
-        results = self.model(image)
-        detections = []
+    def detect_objects(self, frame: Any, verbose: bool = False, show: bool = True) -> List[Detection]:
+        results = self.model(frame, verbose=verbose)
+        self.detections = []
         for result in results[0].boxes:
             confidence = result.conf[0].item()
             if confidence >= self.confidence_threshold:
                 box = result.xyxy[0].tolist()
                 class_id = int(result.cls[0].item())
                 confidence = float(confidence)
-                detections.append(Detection(box, class_id, confidence))
+                self.detections.append(Detection(box, class_id, confidence))
                 
-        return detections
+        if len(self.detections) and show:
+            detection_frame = frame.copy()
+            detection_frame = DisplayUtils.draw_detections(detection_frame, self.detections)
+            DisplayUtils.show_frame(detection_frame, window_name="Detection") 
+                
+        return self.detections
     
     def check_model(self) -> None:
         if self.model is None:
@@ -63,7 +65,7 @@ class SSDObjectDetector(ObjectDetector):
         model.eval()
         return model
     
-    def detect_objects(self, image: Any) -> List[Detection]:
+    def detect_objects(self, image: Any, show: bool = False) -> List[Detection]:
         transform = transforms.ToTensor()
         image = transform(image).unsqueeze(0)
         results = self.model(image)[0]
@@ -87,7 +89,7 @@ class FasterRCNNObjectDetector(ObjectDetector):
         model.eval()
         return model
     
-    def detect_objects(self, image: Any) -> List[Detection]:
+    def detect_objects(self, image: Any, show: bool = False) -> List[Detection]:
         transform = transforms.ToTensor()
         image = transform(image).unsqueeze(0)
         results = self.model(image)[0]
@@ -114,7 +116,7 @@ class Detectron2ObjectDetector(ObjectDetector):
         cfg.MODEL.DEVICE = 'cpu'
         return DefaultPredictor(cfg)
     
-    def detect_objects(self, image: Any) -> List[Detection]:
+    def detect_objects(self, image: Any, show: bool = False) -> List[Detection]:
         outputs = self.model(image)
         detections = []
         instances = outputs["instances"].to("cpu")
