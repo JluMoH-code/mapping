@@ -34,6 +34,15 @@ class ObjectTracker:
     def bbox2yolobbox(self, bbox):
         return [bbox[0], bbox[1], bbox[2] + bbox[0], bbox[3] + bbox[1]]
 
+    def get_bbox(self):
+        return self.bbox2yolobbox(self.bbox) if self.bbox else [0, 0, 0, 0]
+
+    def get_center_bbox(self):
+        if self.bbox:  
+            yolobbox = self.bbox2yolobbox(self.bbox)
+            return [(yolobbox[0] + yolobbox[2]) // 2, (yolobbox[1] + yolobbox[3]) // 2] 
+        else: return [0, 0]
+
     def start_tracking(self, frame: Any, bbox: Tuple[int, int, int, int], context_scale: float = 1.5, min_size: int = 80) -> None:        
         yolobbox = DisplayUtils.calculate_centered_area(bbox, frame.shape, context_scale=context_scale, min_size=min_size)
         self.bbox = self.yolobbox2bbox(yolobbox)

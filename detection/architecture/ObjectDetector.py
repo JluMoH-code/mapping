@@ -27,7 +27,21 @@ class YOLODetector(ObjectDetector):
         self.nms_threshold = nms_threshold
         self.model = self.load_model(model_path)
         self.detections = []
+        
+    def get_center_bbox(self, bbox):
+        return [(bbox[0] + bbox[2]) // 2, (bbox[1] + bbox[3]) // 2]
 
+    def get_detections(self):
+        detections_output = []
+        for detection in self.detections:
+            detections_output.append({
+                "class_id": detection.class_id,
+                "bbox": detection.box,
+                "confidence": detection.confidence,
+                "center_bbox": self.get_center_bbox(detection.box),
+            })
+        return detections_output
+        
     def load_model(self, model_path: str) -> YOLO:
         return YOLO(model_path)
 
