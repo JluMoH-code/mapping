@@ -14,13 +14,12 @@ class ApplicationCore:
         self.input_handler = InputHandler()
         
     def update_and_show_selected_object(self, detections, frame, context_scale=1.5, min_size_area=150, min_size_window=150):
-        new_selected_object = self.selector.select_object(detections, frame)
+        new_selected_object = self.selector.select_object(detections)
 
         if new_selected_object:
             self.selector.selected_object = new_selected_object
             bbox = tuple(map(int, new_selected_object.box))
-            self.tracker.reinitialize_tracker(frame, bbox, min_size_area)
-            bbox = DisplayUtils.calculate_centered_area(bbox, frame.shape, min_size=min_size_area)
+            self.tracker.reinitialize_tracker(frame, bbox, context_scale=context_scale, min_size=min_size_area)
 
     def run(self):
         try:

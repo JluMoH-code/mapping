@@ -14,7 +14,7 @@ class ClickObjectSelector(ObjectSelector):
         self.window = 'Frame'
         self.update_flag = False
 
-    def select_object(self, detections: List[Detection], image: Any) -> Optional[Detection]:
+    def select_object(self, detections: List[Detection]) -> Optional[Detection]:
         self.detections = detections
         cv2.setMouseCallback(self.window, self.on_click)
 
@@ -29,7 +29,6 @@ class ClickObjectSelector(ObjectSelector):
         
         if event == cv2.EVENT_LBUTTONDOWN:
             self.click_position = (x, y)
-            print(f"click position: {self.click_position}")
             nearest_object = self.find_nearest_object()
 
         if nearest_object:

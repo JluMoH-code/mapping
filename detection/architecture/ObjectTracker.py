@@ -1,39 +1,32 @@
 import cv2
-from typing import Optional, Tuple, Any, Union
+from typing import Optional, Tuple, Any
 from ObjectDetector import ObjectDetector
 from DisplayUtils import DisplayUtils
 
 class ObjectTracker:
+    TRACKERS = {
+        'MIL': cv2.legacy.TrackerMIL,
+        'BOOSTING': cv2.legacy.TrackerBoosting,
+        'MEDIANFLOW': cv2.legacy.TrackerMedianFlow,
+        'TLD': cv2.legacy.TrackerTLD,
+        'KCF': cv2.legacy.TrackerKCF,
+        'MOSSE': cv2.legacy.TrackerMOSSE,
+        'GOTURN': cv2.TrackerGOTURN,
+        'DASIAMRPN': cv2.TrackerDaSiamRPN,
+        'NANO': cv2.TrackerNano,
+        'VIT': cv2.TrackerVit
+    }
+    
     def __init__(self, tracker_type: str = 'KCF'):
         self.tracker_type = tracker_type
-        self.create_tracker(tracker_type)
         self.is_tracking = False
         self.bbox = None            # (x, y, width, height)
 
     def create_tracker(self, tracker_type: str) -> None:
-        if tracker_type == 'MIL':
-            self.tracker = cv2.legacy.TrackerMIL.create()
-        elif tracker_type == 'BOOSTING':
-            self.tracker = cv2.legacy.TrackerBoosting.create()
-        elif tracker_type == 'MEDIANFLOW':
-            self.tracker = cv2.legacy.TrackerMedianFlow.create()
-        elif tracker_type == 'TLD':
-            self.tracker = cv2.legacy.TrackerTLD.create()
-        elif tracker_type == 'KCF':
-            self.tracker = cv2.legacy.TrackerKCF.create()
-        elif tracker_type == 'MOSSE':
-            self.tracker = cv2.legacy.TrackerMOSSE.create()
-        elif tracker_type == 'GOTURN':
-            self.tracker = cv2.TrackerGOTURN.create()
-        elif tracker_type == 'DASIAMRPN':
-            self.tracker = cv2.TrackerDaSiamRPN.create()
-        elif tracker_type == 'NANO':
-            self.tracker = cv2.TrackerNano.create()
-        elif tracker_type == 'VIT':
-            self.tracker = cv2.TrackerVit.create()
-        
-        else:
+        if tracker_type not in self.TRACKERS:
             raise ValueError(f"Неизвестный тип трекера: {tracker_type}")
+        
+        self.tracker = self.TRACKERS[tracker_type].create()
 
     def yolobbox2bbox(self, bbox):
         return [bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]]
@@ -41,14 +34,14 @@ class ObjectTracker:
     def bbox2yolobbox(self, bbox):
         return [bbox[0], bbox[1], bbox[2] + bbox[0], bbox[3] + bbox[1]]
 
-    def start_tracking(self, frame: Any, bbox: Tuple[int, int, int, int], min_size: int = 80) -> None:        
-        yolobbox = DisplayUtils.calculate_centered_area(bbox, frame.shape, min_size=min_size)
+    def start_tracking(self, frame: Any, bbox: Tuple[int, int, int, int], context_scale: float = 1.5, min_size: int = 80) -> None:        
+        yolobbox = DisplayUtils.calculate_centered_area(bbox, frame.shape, context_scale=context_scale, min_size=min_size)
         self.bbox = self.yolobbox2bbox(yolobbox)
         self.is_tracking = self.tracker.init(frame, self.bbox)
 
-    def reinitialize_tracker(self, frame: Any, bbox: Tuple[int, int, int, int], min_size: int = 80) -> None:
+    def reinitialize_tracker(self, frame: Any, bbox: Tuple[int, int, int, int], context_scale: float = 1.5, min_size: int = 80) -> None:
         self.create_tracker(self.tracker_type)
-        self.start_tracking(frame, bbox, min_size)
+        self.start_tracking(frame, bbox, context_scale=context_scale, min_size=min_size)
 
     def is_update_tracking(self, frame: Any) -> bool:
         if not self.is_tracking:
