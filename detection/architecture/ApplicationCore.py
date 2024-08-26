@@ -5,6 +5,8 @@ import ObjectSelector
 from DisplayUtils import DisplayUtils
 from InputHandler import InputHandler
 import json
+import numpy as np
+from time import time
 
 class ApplicationCore:
     def __init__(self, frame_capture: FrameCapture, detector: ObjectDetector, selector: ObjectSelector, tracker: ObjectTracker):
@@ -14,6 +16,11 @@ class ApplicationCore:
         self.tracker = tracker
         self.input_handler = InputHandler()
         self.json_data = []
+        self.reload_tracker_by_detector_interval_sec = 1
+        self.frame_number = 0
+        self.frame_time = time()
+        self.time_last_update = time()
+        self.total_time = 0
         
     def update_and_show_selected_object(self, detections, frame, context_scale=1.5, min_size_area=150, min_size_window=150):
         new_selected_object = self.selector.select_object(detections)
@@ -22,6 +29,31 @@ class ApplicationCore:
             self.selector.selected_object = new_selected_object
             bbox = tuple(map(int, new_selected_object.box))
             self.tracker.reinitialize_tracker(frame, bbox, context_scale=context_scale, min_size=min_size_area)
+
+    def euclidean_distance(self, point1, point2):
+        return np.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+
+    def update_tracker_by_detector(self, detections, frame, context_scale=1.5, min_size_area=150, distance_threshold=25.0):
+        self.detector.detect_objects(frame)
+        min_distance = float('inf')
+        matched_detected = None
+        
+        for detection in detections:
+            detected_center = self.detector.get_center_bbox(detection.box)
+            tracked_center = self.tracker.get_center_bbox()
+            
+            distance = self.euclidean_distance(detected_center, tracked_center)
+            
+            print(detected_center, tracked_center, distance)
+            
+            if distance < min_distance and distance <= distance_threshold:
+                min_distance = distance
+                matched_detected = detection.box
+                
+        if matched_detected and min_distance >= distance_threshold / 5:
+            print(f"Трекер скорректирован на точку: {matched_detected} (расстояние: {min_distance}px)")
+            self.tracker.reinitialize_tracker(frame, matched_detected, context_scale=context_scale, min_size=min_size_area)
+        return matched_detected
 
     def forming_output_data(self, frame_number):
         data = {
@@ -38,23 +70,35 @@ class ApplicationCore:
         with open(output_path, "w") as f:
             json.dump(self.json_data, f, indent=4)           
 
+    def calculate_fps(self):
+        fps = 1 / (time() - self.frame_time)
+        self.frame_time = time()
+        return fps
+
     def run(self):
-        frame_number = 0
         try:
             while True:
                 self.frame = self.frame_capture.get_frame()
                 resized_frame = DisplayUtils.resize_frame(self.frame, 640, 384)
                 DisplayUtils.show_frame(resized_frame)
                 
-                self.detector.detect_objects(resized_frame, show = True)
+                # if not self.tracker.is_tracking:
+                self.detector.detect_objects(resized_frame, show = True, window_name="Frame")
+                
+                if time() - self.time_last_update >= self.reload_tracker_by_detector_interval_sec:
+                    self.time_last_update = time()
+                    self.update_tracker_by_detector(self.detector.detections, resized_frame, min_size_area=80)
                 
                 self.update_and_show_selected_object(self.detector.detections, resized_frame, min_size_area=80)
 
                 self.tracker.tracking(resized_frame, show=True)
                 
-                self.forming_output_data(frame_number)
+                self.forming_output_data(self.frame_number)
                 
-                frame_number += 1
+                self.frame_number += 1
+                
+                fps = self.calculate_fps()
+                print(f"Средний FPS: {fps:.2f}")
                         
                 if self.input_handler.should_exit():
                     break

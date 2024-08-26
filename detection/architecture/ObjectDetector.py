@@ -45,7 +45,7 @@ class YOLODetector(ObjectDetector):
     def load_model(self, model_path: str) -> YOLO:
         return YOLO(model_path)
 
-    def detect_objects(self, frame: Any, verbose: bool = False, show: bool = True) -> List[Detection]:
+    def detect_objects(self, frame: Any, verbose: bool = False, show: bool = True, window_name: str = "Detection") -> List[Detection]:
         results = self.model(frame, verbose=verbose)
         self.detections = []
         for result in results[0].boxes:
@@ -59,7 +59,7 @@ class YOLODetector(ObjectDetector):
         if len(self.detections) and show:
             detection_frame = frame.copy()
             detection_frame = DisplayUtils.draw_detections(detection_frame, self.detections)
-            DisplayUtils.show_frame(detection_frame, window_name="Detection") 
+            DisplayUtils.show_frame(detection_frame, window_name=window_name) 
                 
         return self.detections
     
