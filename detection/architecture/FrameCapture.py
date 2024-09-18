@@ -87,9 +87,11 @@ if PiCamera:
     
 if Picamera2:    
     class PiCamera2Capture(FrameCapture):
-        def __init__(self):
+        def __init__(self, width=1280, height=720):
             self.camera = Picamera2()
-            self.configure()
+            self.size = (width, height)
+            self.config = self.camera.create_video_configuration(main={"size": self.size, "format": "RGB888"})
+            self.camera.configure(self.config)
             self.camera.start()
 
         def get_frame(self):
