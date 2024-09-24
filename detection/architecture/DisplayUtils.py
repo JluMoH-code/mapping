@@ -4,9 +4,7 @@ from typing import List, Optional, Any, Tuple
 from Detection import Detection
 
 class DisplayUtils:
-    def __init__(self, window_name: str = "Frame"):
-        self.window_name = window_name
-        cv2.namedWindow(self.window_name)
+    window_name = "Frame"
 
     @staticmethod
     def draw_detection_box(frame: Any, bbox: List[float]) -> None:
@@ -100,3 +98,16 @@ class DisplayUtils:
     @staticmethod
     def resize_window(window_name, width: int, height: int) -> None:
         cv2.resizeWindow(window_name, width, height)
+    
+    @staticmethod
+    def check_click(selector, detector, tracker, frame, show=False, window_name="Detect", context_scale=1.5, min_size_area=150):
+        params = [selector, detector, tracker, frame, show, window_name, context_scale, min_size_area]
+        cv2.setMouseCallback(DisplayUtils.window_name, DisplayUtils.on_click, params)
+    
+    @staticmethod
+    def on_click(event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            param[1].detect_objects(frame=param[3], show=param[4], window_name=param[5])
+            if param[0].select_object(param[1].detections, (x, y)):
+                bbox = tuple(map(int, param[0].selected_object.box))
+                param[2].reinitialize_tracker(param[3], bbox, context_scale=param[6], min_size=param[7])

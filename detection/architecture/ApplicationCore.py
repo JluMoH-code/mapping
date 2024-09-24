@@ -22,14 +22,6 @@ class ApplicationCore:
         self.time_last_update = time()
         self.total_time = 0
         
-    def update_and_show_selected_object(self, detections, frame, context_scale=1.5, min_size_area=150, min_size_window=150):
-        new_selected_object = self.selector.select_object(detections)
-
-        if new_selected_object:
-            self.selector.selected_object = new_selected_object
-            bbox = tuple(map(int, new_selected_object.box))
-            self.tracker.reinitialize_tracker(frame, bbox, context_scale=context_scale, min_size=min_size_area)
-
     def euclidean_distance(self, point1, point2):
         return np.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
@@ -82,14 +74,11 @@ class ApplicationCore:
                 resized_frame = DisplayUtils.resize_frame(self.frame, 640, 384)
                 DisplayUtils.show_frame(resized_frame)
                 
-                # if not self.tracker.is_tracking:
-                self.detector.detect_objects(resized_frame, show = True, window_name="Frame")
+                DisplayUtils.check_click(self.selector, self.detector, self.tracker, resized_frame, show=True, window_name="Frame", min_size_area=80)
                 
                 if time() - self.time_last_update >= self.reload_tracker_by_detector_interval_sec:
                     self.time_last_update = time()
                     self.update_tracker_by_detector(self.detector.detections, resized_frame, min_size_area=80)
-                
-                self.update_and_show_selected_object(self.detector.detections, resized_frame, min_size_area=80)
 
                 self.tracker.tracking(resized_frame, show=True)
                 

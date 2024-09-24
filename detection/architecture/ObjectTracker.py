@@ -14,7 +14,7 @@ class ObjectTracker:
         'GOTURN': cv2.TrackerGOTURN,
         'DASIAMRPN': cv2.TrackerDaSiamRPN,
         'NANO': cv2.TrackerNano,
-        'VIT': cv2.TrackerVit
+        # 'VIT': cv2.TrackerVit
     }
     
     def __init__(self, tracker_type: str = 'KCF'):
