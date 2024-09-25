@@ -4,13 +4,16 @@ import time
 try:
     from picamera import PiCamera
     from picamera.array import PiRGBArray
-except ImportError:
+except:
+    print("Picamera import error")
     PiCamera = None
     PiRGBArray = None
 
 try:
     from picamera2 import Picamera2
+    from libcamera import Transform, ColorSpace, controls
 except ImportError:
+    print("Picamera2 import error")
     Picamera2 = None
 
 class FrameCapture:
@@ -87,12 +90,39 @@ if PiCamera:
     
 if Picamera2:    
     class PiCamera2Capture(FrameCapture):
-        def __init__(self, width=1280, height=720):
+        def __init__(self, mode=1, size=(1920,1080), lowres=(320,240), framerate=60, buffer_count=4, hflip=1, vflip=0):
             self.camera = Picamera2()
-            self.size = (width, height)
-            self.config = self.camera.create_video_configuration(main={"size": self.size, "format": "RGB888"})
-            self.camera.configure(self.config)
+            self.configure(mode=1, size=size, lowres=lowres, framerate=framerate, buffer_count=buffer_count, hflip=hflip, vflip=vflip)
             self.camera.start()
+
+        def camera_config(self, mode, size, lowres, framerate=60, buffer_count=4, hflip=1, vflip=0):
+            modes = self.camera.sensor_modes
+            mode = modes[mode]
+            camera_config = self.camera.create_video_configuration(
+                sensor={
+                    "output_size": mode['size'],
+                    "bit_depth": mode['bit_depth'],
+                },
+                raw={
+                    "size": mode['size'],
+                    "format": mode['unpacked'],
+                },
+                main={                                  # основной поток
+                    "size": size,
+                    "format": 'RGB888'
+                },                    
+                lores={"size": lowres},                 # отображаемый потк
+                display="lores",
+                transform=Transform(hflip=hflip, vflip=vflip),  # отражение по горизонтали/вертикали
+                buffer_count=buffer_count,                         # хранимый буфер кадров, больше -- плавнее
+                queue=False,
+                controls={
+                    "FrameRate": framerate,
+                    # "FrameDurationLimits": (8333, 16666),    # microseconds per frame
+                    "AfMode": controls.AfModeEnum.Continuous,
+                },
+                )                             
+            return camera_config
 
         def get_frame(self):
             try:
@@ -106,5 +136,6 @@ if Picamera2:
         def is_opened(self):
             return True
         
-        def configure(self):
-            self.camera.configure(self.camera.create_still_configuration())
+        def configure(self, mode, size, lowres, framerate, buffer_count, hflip, vflip):
+            config = self.camera_config(mode, size, lowres, framerate, buffer_count, hflip, vflip)
+            self.camera.configure(config)

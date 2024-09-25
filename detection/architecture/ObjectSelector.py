@@ -10,21 +10,23 @@ class ClickObjectSelector(ObjectSelector):
     def __init__(self):
         self.selected_object = None
         self.click_position = None
-        self.detections = []
         self.window = 'Frame'
 
     def select_object(self, detections: List[Detection], position) -> Optional[Detection]:
-        self.detections = detections
-        self.selected_object = self.find_nearest_object(position)
+        self.selected_object = self.find_nearest_object(detections, position)
         if self.selected_object:
             return True
-        return False
+        try:
+            self.selected_object = self.select_square_area(position)
+            return True
+        except:
+            return False
 
-    def find_nearest_object(self, position) -> Optional[Detection]:
+    def find_nearest_object(self, detections, position) -> Optional[Detection]:
         min_distance = float('inf')
         nearest_detection = None
         
-        for detection in self.detections:
+        for detection in detections:
             box = detection.box
             center_x = (box[0] + box[2]) / 2
             center_y = (box[1] + box[3]) / 2
@@ -34,3 +36,12 @@ class ClickObjectSelector(ObjectSelector):
                 nearest_detection = detection
         
         return nearest_detection
+    
+    def select_square_area(self, position, min_area=(100, 100)):
+        x1 = position[0] - min_area[0] // 2
+        y1 = position[1] - min_area[0] // 2
+        x2 = position[0] + min_area[0] // 2
+        y2 = position[1] + min_area[1] // 2
+        box = (x1, y1, x2, y2)
+
+        return Detection(box=box)

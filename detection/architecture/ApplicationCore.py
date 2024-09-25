@@ -16,11 +16,12 @@ class ApplicationCore:
         self.tracker = tracker
         self.input_handler = InputHandler()
         self.json_data = []
-        self.reload_tracker_by_detector_interval_sec = 1
+        self.reload_tracker_by_detector_interval_sec = 5
         self.frame_number = 0
         self.frame_time = time()
         self.time_last_update = time()
         self.total_time = 0
+        self.runned = False
         
     def euclidean_distance(self, point1, point2):
         return np.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
@@ -74,27 +75,27 @@ class ApplicationCore:
                 resized_frame = DisplayUtils.resize_frame(self.frame, 640, 384)
                 DisplayUtils.show_frame(resized_frame)
                 
-                DisplayUtils.check_click(self.selector, self.detector, self.tracker, resized_frame, show=True, window_name="Frame", min_size_area=80)
+                DisplayUtils.check_click(self.selector, self.detector, self.tracker, resized_frame, show=False, window_name="Frame", min_size_area=80)
                 
-                if time() - self.time_last_update >= self.reload_tracker_by_detector_interval_sec:
+                if time() - self.time_last_update >= self.reload_tracker_by_detector_interval_sec and self.runned:
                     self.time_last_update = time()
                     self.update_tracker_by_detector(self.detector.detections, resized_frame, min_size_area=80)
 
                 self.tracker.tracking(resized_frame, show=True)
-                
+                self.runned |= self.tracker.is_tracking
                 self.forming_output_data(self.frame_number)
                 
                 self.frame_number += 1
                 
                 fps = self.calculate_fps()
-                print(f"Средний FPS: {fps:.2f}")
+                print(f"Average FPS: {fps:.2f}")
                         
                 if self.input_handler.should_exit():
                     break
 
         except KeyboardInterrupt:
-            print("Приложение остановлено пользователем.")
+            print("Application stopped by user!")
         finally:
             self.frame_capture.release()
             DisplayUtils.close_windows()
-            self.save_data()
+            # self.save_data()

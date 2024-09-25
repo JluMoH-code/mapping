@@ -3,5 +3,6 @@ test_data/
 runs/
 videos/
 train_data/
+venv_detection/
 *.pt
 .env
