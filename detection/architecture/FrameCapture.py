@@ -4,17 +4,18 @@ import time
 try:
     from picamera import PiCamera
     from picamera.array import PiRGBArray
+    PiCamera_import = True
 except:
     print("Picamera import error")
-    PiCamera = None
-    PiRGBArray = None
+    PiCamera_import = False
 
 try:
     from picamera2 import Picamera2
     from libcamera import Transform, ColorSpace, controls
+    PiCamera2_import = True
 except ImportError:
     print("Picamera2 import error")
-    Picamera2 = None
+    PiCamera2_import = False
 
 class FrameCapture:
     def get_frame(self):
@@ -63,7 +64,7 @@ class ImageFrameCapture(FrameCapture):
     def is_opened(self):
         return self.image is not None
  
-if PiCamera:       
+if PiCamera_import:       
     class PiCameraCapture(FrameCapture):
         def __init__(self, resolution=(640, 480), framerate=32):
             self.camera = PiCamera()
@@ -88,7 +89,7 @@ if PiCamera:
             self.camera.resolution = resolution
             self.camera.framerate = framerate
     
-if Picamera2:    
+if PiCamera2_import:    
     class PiCamera2Capture(FrameCapture):
         def __init__(self, mode=1, size=(1920,1080), lowres=(320,240), framerate=60, buffer_count=4, hflip=1, vflip=0):
             self.camera = Picamera2()
